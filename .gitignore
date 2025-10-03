@@ -1,0 +1,33 @@
+# Hassas bilgiler - GitHub'a yüklenmesin
+config.txt
+
+# Keylogger data dosyaları
+keyloggerdata.txt
+*.log
+
+# Build sonuçları
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Rider
+.idea/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
