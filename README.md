@@ -2,6 +2,9 @@
 
 Bu proje, eğitim amaçlı bir keylogger uygulamasıdır.
 
+## 🎥 Video Anlatım
+[YouTube'da İzle](https://youtu.be/YbMjK89osHM)
+
 ## ⚠️ UYARI
 Bu uygulama yalnızca eğitim ve kişisel test amaçlıdır. İzinsiz kullanımı yasa dışıdır ve etik değildir. Sorumlu bir şekilde kullanın.
 
@@ -47,6 +50,10 @@ dotnet run
 - ✅ Türkçe karakter desteği (UTF8)
 - ✅ Sistem bilgileri (IP, kullanıcı adı, tarih)
 - ✅ Güvenli yapılandırma (config.txt)
+- ✅ Temiz tuş kaydı (gereksiz sayılar/key kodları yok)
+- ✅ Gmail App Password otomatik boşluk temizleme
+- ✅ Gelişmiş hata mesajları ve debug log
+- ✅ Visual Studio ve Terminal uyumluluğu
 
 ## 📂 Dosya Yapısı
 
