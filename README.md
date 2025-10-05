@@ -3,7 +3,10 @@
 Bu proje, eğitim amaçlı bir keylogger uygulamasıdır.
 
 ## 🎥 Video Anlatım
-[YouTube'da İzle](https://youtu.be/YbMjK89osHM)
+
+[![KeyLogger Video Anlatım](https://img.youtube.com/vi/YbMjK89osHM/maxresdefault.jpg)](https://youtu.be/YbMjK89osHM)
+
+*👆 Videoya gitmek için tıklayın*
 
 ## ⚠️ UYARI
 Bu uygulama yalnızca eğitim ve kişisel test amaçlıdır. İzinsiz kullanımı yasa dışıdır ve etik değildir. Sorumlu bir şekilde kullanın.
